@@ -3,11 +3,14 @@ import { PortfolioPieChart } from "../components/PortfolioPieChart";
 import { PortfolioBarChart } from "../components/PortfolioBarChart";
 import { HoldingsTable } from "../components/HoldingsTable";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function DashboardStep({
   loading,
   error,
   portfolioData,
+  pendingAssets,
+  refreshingByType,
   barData,
   totalValue,
   totalInvested,
@@ -19,6 +22,7 @@ export function DashboardStep({
   onManageCoins,
   onReset,
 }) {
+  const { t } = useLanguage();
   // Só mostra o ecrã de loading inteiro na primeira vez; as atualizações
   // automáticas seguintes só mudam o texto do botão de refresh no cabeçalho.
   if (loading && portfolioData.length === 0) {
@@ -59,17 +63,23 @@ export function DashboardStep({
         <PortfolioBarChart barData={barData} />
       </div>
 
-      <HoldingsTable portfolioData={portfolioData} holdings={holdings} onQtyChange={updateQty} />
+      <HoldingsTable
+        portfolioData={portfolioData}
+        pendingAssets={pendingAssets}
+        refreshingByType={refreshingByType}
+        holdings={holdings}
+        onQtyChange={updateQty}
+      />
 
       <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}>
         <button className="btn-ghost" onClick={onEdit}>
-          ← EDITAR
+          {t("editAmounts")}
         </button>
         <button className="btn-ghost" onClick={onManageCoins}>
-          + GERIR MOEDAS
+          {t("manageAssets")}
         </button>
         <button className="btn-ghost" onClick={onReset}>
-          RESETAR
+          {t("resetPortfolio")}
         </button>
       </div>
     </>

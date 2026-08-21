@@ -58,7 +58,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
 .header-actions {
   display: flex;
@@ -110,6 +111,25 @@
   transition: all 0.15s;
 }
 .theme-toggle:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+.lang-toggle {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-secondary);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.lang-toggle:hover { border-color: var(--text-secondary); color: var(--text-primary); }
 .content { padding: 28px 32px; max-width: 1000px; margin: 0 auto; }
 .step-title {
   font-family: 'Syne', sans-serif;
@@ -119,6 +139,27 @@
   margin-bottom: 6px;
 }
 .step-sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 24px; }
+.asset-type-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.asset-type-tab {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.asset-type-tab:hover { border-color: var(--border); color: var(--text-primary); }
+.asset-type-tab.active { border-color: var(--accent); background: var(--accent-bg); color: var(--text-primary); }
 .search-box {
   width: 100%;
   background: var(--bg-surface);
@@ -134,6 +175,9 @@
 }
 .search-box:focus { border-color: var(--accent); }
 .search-status { font-size: 11px; color: var(--text-tertiary); margin-bottom: 16px; min-height: 14px; }
+.search-status-loading { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+.spin-icon { display: inline-block; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .coin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -159,13 +203,15 @@
   flex-shrink: 0;
   background: var(--bg-surface-2);
   object-fit: cover;
+  vertical-align: middle;
 }
 .coin-icon-fallback {
   width: 24px; height: 24px;
   border-radius: 50%;
   flex-shrink: 0;
   background: var(--border-subtle);
-  display: flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle;
   font-size: 10px; color: var(--text-secondary);
   font-family: 'Syne', sans-serif; font-weight: 700;
 }
@@ -289,9 +335,11 @@
   .coin-card { padding: 14px; }
   .check { width: 20px; height: 20px; }
   .chart-download-btn { width: 32px; height: 32px; font-size: 14px; }
+  .asset-type-tab { padding: 11px 16px; min-height: 40px; }
+  .sort-select { padding: 8px 10px; min-height: 36px; }
 
   /* 16px é o limiar a partir do qual o iOS Safari deixa de dar zoom automático ao focar um input */
-  .search-box, .amount-input { font-size: 16px; }
+  .search-box, .amount-input, .sort-select { font-size: 16px; }
 
   /* Cards de estatísticas: grelha fixa de 2 colunas em vez de auto-fit, para o
      card "RETORNO" (e os outros) não ficarem ora emparelhados ora esticados
@@ -372,12 +420,21 @@
 .table td.mono { font-family: 'DM Mono', monospace; }
 .pnl-pos { color: var(--success); }
 .pnl-neg { color: var(--danger); }
-.dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
+/* Selo do tipo de ativo na tabela de breakdown — cores fixas (iguais nos dois
+   temas), como as da paleta dos gráficos, para se distinguirem sempre bem. */
+.type-badge {
   display: inline-block;
-  margin-right: 6px;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  vertical-align: middle;
 }
+.type-badge-crypto { background: rgba(247, 147, 26, 0.16); color: #F7931A; }
+.type-badge-etf { background: rgba(59, 130, 246, 0.16); color: #3b82f6; }
+.type-badge-stock { background: rgba(167, 139, 250, 0.18); color: #a78bfa; }
 .refresh-btn {
   background: transparent;
   border: 1px solid var(--border);
@@ -415,6 +472,7 @@
   0% { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
 }
+.skeleton-cell { display: inline-block; width: 46px; height: 11px; vertical-align: middle; }
 
 /* Quantidade editável diretamente na tabela de breakdown — sempre visível como
    campo (não só ao passar o rato), para ficar claro que é editável no telemóvel */
@@ -466,13 +524,13 @@
     margin-right: 12px;
     flex-shrink: 0;
   }
-  .table td[data-label="MOEDA"] {
+  .table td.asset-cell {
     display: block;
     border-bottom: 1px solid var(--border-subtle);
     padding-bottom: 10px;
     margin-bottom: 6px;
   }
-  .table td[data-label="MOEDA"]::before { content: none; }
+  .table td.asset-cell::before { content: none; }
 
   /* O font-size real tem de ficar em 16px para o iOS não dar zoom ao focar, mas
      encolhemos visualmente com scale() para bater certo com o resto da tabela (12px).

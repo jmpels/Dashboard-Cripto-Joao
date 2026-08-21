@@ -1,18 +1,30 @@
+import { useLanguage } from "../i18n/LanguageContext";
+
 export function Header({ isDashboard, loading, onRefresh, lastUpdated, theme, onToggleTheme }) {
+  const { lang, toggleLang, t } = useLanguage();
+
   return (
     <div className="header">
       <div className="header-top">
         <div>
           <div className="logo">⬡ CRYPTFOLIO</div>
-          <div className="logo-sub">PORTFOLIO TRACKER</div>
+          <div className="logo-sub">{t("tagline")}</div>
         </div>
         <div className="header-right">
-          <div className="badge">● LIVE</div>
+          <div className="badge">{t("live")}</div>
+          <button
+            className="lang-toggle"
+            onClick={toggleLang}
+            aria-label={lang === "pt" ? "Switch to English" : "Mudar para Português"}
+            title={lang === "pt" ? "English" : "Português"}
+          >
+            {lang === "pt" ? "EN" : "PT"}
+          </button>
           <button
             className="theme-toggle"
             onClick={onToggleTheme}
-            aria-label={theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
-            title={theme === "dark" ? "Modo claro" : "Modo escuro"}
+            aria-label={theme === "dark" ? t("enableLightMode") : t("enableDarkMode")}
+            title={theme === "dark" ? t("lightMode") : t("darkMode")}
           >
             {theme === "dark" ? "☀" : "☾"}
           </button>
@@ -22,10 +34,12 @@ export function Header({ isDashboard, loading, onRefresh, lastUpdated, theme, on
       {isDashboard && (
         <div className="header-actions">
           <button className="refresh-btn" onClick={() => onRefresh(true)} disabled={loading}>
-            {loading ? "⟳ A ATUALIZAR..." : "⟳ ATUALIZAR PREÇOS"}
+            {loading ? t("refreshing") : t("refreshPrices")}
           </button>
           {lastUpdated && (
-            <span className="header-updated">{lastUpdated.toLocaleTimeString("pt-PT")}</span>
+            <span className="header-updated">
+              {lastUpdated.toLocaleTimeString(lang === "pt" ? "pt-PT" : "en-GB")}
+            </span>
           )}
         </div>
       )}

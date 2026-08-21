@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchJsonCached } from "../utils/apiCache";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const PRICES_TTL_MS = 60 * 1000; // 1 minuto
 
@@ -7,6 +8,7 @@ const PRICES_TTL_MS = 60 * 1000; // 1 minuto
 // com cache de 1 minuto e atualização automática enquanto `active` for true.
 // Se a API falhar, usa valores simulados para o dashboard nunca ficar vazio.
 export function usePrices(selected, { active }) {
+  const { t } = useLanguage();
   const [prices, setPrices] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,7 +29,7 @@ export function usePrices(selected, { active }) {
         setPrices(data);
         setLastUpdated(new Date(timestamp));
       } catch {
-        setError("Não foi possível obter preços reais neste momento. A usar valores simulados.");
+        setError(t("errorPricesCrypto"));
         const mock = {};
         selected.forEach((id) => {
           mock[id] = { eur: Math.random() * 1000 + 10, eur_24h_change: Math.random() * 10 - 5 };
@@ -38,6 +40,10 @@ export function usePrices(selected, { active }) {
         setLoading(false);
       }
     },
+    // `t` fica de fora de propósito: incluí-la recriava fetchPrices a cada troca de
+    // idioma/render, o que voltava a disparar pedidos repetidos (o mesmo bug do useMemo
+    // em CryptoDashboard.jsx). O texto de erro só atualiza no próximo fetch, é aceitável.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [selected]
   );
 

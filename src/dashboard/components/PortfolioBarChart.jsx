@@ -3,8 +3,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { BarTooltip } from "./ChartTooltips";
 import { DownloadIcon } from "./DownloadIcon";
 import { downloadSvgAsPng, findChartSvg } from "../utils/exportChartImage";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function PortfolioBarChart({ barData }) {
+  const { t } = useLanguage();
   const chartWrapRef = useRef(null);
 
   const handleDownload = () => {
@@ -14,13 +16,13 @@ export function PortfolioBarChart({ barData }) {
   return (
     <div className="chart-card">
       <div className="chart-header">
-        <div className="chart-title">INVESTIDO vs ATUAL (EUR)</div>
+        <div className="chart-title">{t("barTitle")}</div>
         {barData.length > 0 && (
           <button
             className="chart-download-btn"
             onClick={handleDownload}
-            aria-label="Guardar imagem do gráfico"
-            title="Guardar imagem"
+            aria-label={t("saveChartImage")}
+            title={t("saveImage")}
           >
             <DownloadIcon />
           </button>
@@ -44,8 +46,8 @@ export function PortfolioBarChart({ barData }) {
                 tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v)}
               />
               <Tooltip content={<BarTooltip />} cursor={{ fill: "var(--bg-surface-2)" }} />
-              <Bar dataKey="Investido" fill="var(--border)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Atual" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="Investido" name={t("barInvested")} fill="var(--border)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Atual" name={t("barCurrent")} radius={[4, 4, 0, 0]}>
                 {barData.map((d) => (
                   <Cell key={d.name} fill={d.fill} />
                 ))}
@@ -55,9 +57,9 @@ export function PortfolioBarChart({ barData }) {
         </div>
       ) : (
         <div className="empty-state">
-          Insere valores investidos
+          {t("enterInvestedValues")}
           <br />
-          para ver a comparação
+          {t("toSeeComparison")}
         </div>
       )}
     </div>

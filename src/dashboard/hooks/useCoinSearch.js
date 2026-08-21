@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { POPULAR_COINS } from "../data/coins";
 import { fetchJsonCached } from "../utils/apiCache";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const POPULAR_ICONS_TTL_MS = 10 * 60 * 1000; // 10 minutos — logos e rank quase não mudam
 const SEARCH_TTL_MS = 3 * 60 * 1000; // 3 minutos — evita repetir a mesma pesquisa
@@ -14,6 +15,7 @@ const buildInitialMap = () => {
 // Pesquisa moedas na CoinGecko à medida que o utilizador escreve (com debounce),
 // e mantém um mapa id -> coin com tudo o que já foi visto (populares + resultados de pesquisa).
 export function useCoinSearch() {
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [coinsMap, setCoinsMap] = useState(buildInitialMap);
   const [searchResults, setSearchResults] = useState(null); // null = mostrar populares
@@ -86,7 +88,7 @@ export function useCoinSearch() {
           return next;
         });
       } catch {
-        setSearchError("Não foi possível pesquisar moedas de momento.");
+        setSearchError(t("errorSearchCoins"));
         setSearchResults([]);
       } finally {
         setSearching(false);

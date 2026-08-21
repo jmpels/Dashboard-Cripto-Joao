@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { fmt, fmtPrice } from "../utils/format";
+import { useLanguage } from "../i18n/LanguageContext";
+import { CoinIcon } from "./CoinIcon";
 
 // Input isolado com o seu próprio rascunho: só escreve em `holdings` (via onCommit)
 // ao sair do campo. Assim, limpar o valor para escrever um novo (ex: "2" -> "2.5")
@@ -28,15 +30,6 @@ function EditableQtyCell({ id, value, onCommit }) {
   );
 }
 
-const SORT_OPTIONS = [
-  { key: "value", label: "Valor atual" },
-  { key: "name", label: "Nome" },
-  { key: "pnl", label: "P&L" },
-  { key: "pct", label: "% Portfólio" },
-  { key: "price", label: "Preço" },
-  { key: "change24h", label: "24h" },
-];
-
 function sortValue(d, key) {
   switch (key) {
     case "name":
@@ -54,9 +47,21 @@ function sortValue(d, key) {
   }
 }
 
-export function HoldingsTable({ portfolioData, holdings, onQtyChange }) {
+export function HoldingsTable({ portfolioData, pendingAssets = [], refreshingByType = {}, holdings, onQtyChange }) {
+  const { t } = useLanguage();
   const [sortKey, setSortKey] = useState("value");
   const [sortDir, setSortDir] = useState("desc");
+
+  const SORT_OPTIONS = [
+    { key: "value", label: t("sortValue") },
+    { key: "name", label: t("sortName") },
+    { key: "pnl", label: t("sortPnl") },
+    { key: "pct", label: t("sortPct") },
+    { key: "price", label: t("sortPrice") },
+    { key: "change24h", label: t("sortChange24h") },
+  ];
+
+  const ASSET_TYPE_LABEL = { crypto: t("typeCryptoBadge"), etf: t("typeEtfBadge"), stock: t("typeStockBadge") };
 
   const sortedData = [...portfolioData].sort((a, b) => {
     const va = sortValue(a, sortKey);
@@ -68,13 +73,13 @@ export function HoldingsTable({ portfolioData, holdings, onQtyChange }) {
   return (
     <div className="chart-card">
       <div className="chart-header">
-        <div className="chart-title">BREAKDOWN POR MOEDA</div>
+        <div className="chart-title">{t("breakdownTitle")}</div>
         <div className="sort-controls">
           <select
             className="sort-select"
             value={sortKey}
             onChange={(e) => setSortKey(e.target.value)}
-            aria-label="Ordenar por"
+            aria-label={t("sortBy")}
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.key} value={o.key}>
@@ -85,25 +90,30 @@ export function HoldingsTable({ portfolioData, holdings, onQtyChange }) {
           <button
             className="chart-download-btn"
             onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
-            aria-label={sortDir === "asc" ? "Ordem ascendente" : "Ordem descendente"}
-            title={sortDir === "asc" ? "Ascendente" : "Descendente"}
+            aria-label={sortDir === "asc" ? t("sortAsc") : t("sortDesc")}
+            title={sortDir === "asc" ? t("ascending") : t("descending")}
           >
             {sortDir === "asc" ? "↑" : "↓"}
           </button>
         </div>
       </div>
+      {(pendingAssets.length > 0 || refreshingByType.crypto || refreshingByType.etf || refreshingByType.stock) && (
+        <div className="search-status-loading" style={{ marginBottom: 12, fontSize: 11 }}>
+          <span className="spin-icon">⟳</span> {t("breakdownLoadingNotice")}
+        </div>
+      )}
       <div style={{ overflowX: "auto" }}>
         <table className="table">
           <thead>
             <tr>
-              <th>MOEDA</th>
-              <th>PREÇO</th>
-              <th>24H</th>
-              <th>QUANTIDADE</th>
-              <th>VALOR ATUAL</th>
-              <th>INVESTIDO</th>
+              <th>{t("colAsset")}</th>
+              <th>{t("colPrice")}</th>
+              <th>{t("col24h")}</th>
+              <th>{t("colQuantity")}</th>
+              <th>{t("colCurrentValue")}</th>
+              <th>{t("colInvested")}</th>
               <th>P&L</th>
-              <th>% PORTFÓLIO</th>
+              <th>{t("colPct")}</th>
             </tr>
           </thead>
           <tbody>
@@ -112,15 +122,21 @@ export function HoldingsTable({ portfolioData, holdings, onQtyChange }) {
               const coinPnlPct = d.invested > 0 ? ((d.value - d.invested) / d.invested) * 100 : null;
               return (
                 <tr key={d.id}>
-                  <td data-label="MOEDA">
-                    <span className="dot" style={{ background: d.fill }} />
-                    <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700 }}>{d.name}</span>
+                  <td className="asset-cell" data-label={t("colAsset")}>
+                    <CoinIcon coin={{ thumb: d.thumb, symbol: d.name }} />
+                    <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, marginLeft: 8 }}>{d.name}</span>
+                    <span className={`type-badge type-badge-${d.type}`}>{ASSET_TYPE_LABEL[d.type]}</span>
                     <div style={{ color: "var(--text-secondary)", marginLeft: 14 }}>{d.fullName}</div>
                   </td>
-                  <td className="mono" data-label="PREÇO">
+                  <td className="mono" data-label={t("colPrice")}>
                     {fmtPrice(d.price)}
+                    {refreshingByType[d.type] && (
+                      <span className="spin-icon" style={{ marginLeft: 6 }} title={t("refreshingAsset")}>
+                        ⟳
+                      </span>
+                    )}
                   </td>
-                  <td className="mono" data-label="24H">
+                  <td className="mono" data-label={t("col24h")}>
                     {d.change24h !== null ? (
                       <span className={d.change24h >= 0 ? "pnl-pos" : "pnl-neg"}>
                         {d.change24h >= 0 ? "▲" : "▼"} {Math.abs(d.change24h).toFixed(1)}%
@@ -129,17 +145,17 @@ export function HoldingsTable({ portfolioData, holdings, onQtyChange }) {
                       <span style={{ color: "var(--text-tertiary)" }}>—</span>
                     )}
                   </td>
-                  <td className="mono" data-label="QUANTIDADE">
+                  <td className="mono" data-label={t("colQuantity")}>
                     <EditableQtyCell
                       id={d.id}
                       value={holdings[d.id]?.qty ?? String(d.qty)}
                       onCommit={onQtyChange}
                     />
                   </td>
-                  <td className="mono" data-label="VALOR ATUAL">
+                  <td className="mono" data-label={t("colCurrentValue")}>
                     {fmt(d.value)}
                   </td>
-                  <td className="mono" data-label="INVESTIDO">
+                  <td className="mono" data-label={t("colInvested")}>
                     {d.invested > 0 ? fmt(d.invested) : <span style={{ color: "var(--text-tertiary)" }}>—</span>}
                   </td>
                   <td className="mono" data-label="P&L">
@@ -156,12 +172,45 @@ export function HoldingsTable({ portfolioData, holdings, onQtyChange }) {
                       <span style={{ color: "var(--text-tertiary)" }}>—</span>
                     )}
                   </td>
-                  <td className="mono" data-label="% PORTFÓLIO">
+                  <td className="mono" data-label={t("colPct")}>
                     {d.pct.toFixed(1)}%
                   </td>
                 </tr>
               );
             })}
+            {pendingAssets.map((a) => (
+              <tr key={a.id} className="pending-row" aria-busy="true">
+                <td className="asset-cell" data-label={t("colAsset")}>
+                  <CoinIcon coin={a} />
+                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, marginLeft: 8 }}>
+                    {a.symbol}
+                  </span>
+                  <span className={`type-badge type-badge-${a.type}`}>{ASSET_TYPE_LABEL[a.type]}</span>
+                  <div style={{ color: "var(--text-tertiary)", marginLeft: 14 }}>{t("loadingAsset")}</div>
+                </td>
+                <td className="mono" data-label={t("colPrice")}>
+                  <span className="skeleton-block skeleton-cell" />
+                </td>
+                <td className="mono" data-label={t("col24h")}>
+                  <span className="skeleton-block skeleton-cell" />
+                </td>
+                <td className="mono" data-label={t("colQuantity")}>
+                  <span className="skeleton-block skeleton-cell" />
+                </td>
+                <td className="mono" data-label={t("colCurrentValue")}>
+                  <span className="skeleton-block skeleton-cell" />
+                </td>
+                <td className="mono" data-label={t("colInvested")}>
+                  <span className="skeleton-block skeleton-cell" />
+                </td>
+                <td className="mono" data-label="P&L">
+                  <span className="skeleton-block skeleton-cell" />
+                </td>
+                <td className="mono" data-label={t("colPct")}>
+                  <span className="skeleton-block skeleton-cell" />
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

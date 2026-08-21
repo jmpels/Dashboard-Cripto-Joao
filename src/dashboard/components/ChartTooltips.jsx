@@ -1,4 +1,5 @@
 import { fmt } from "../utils/format";
+import { useLanguage } from "../i18n/LanguageContext";
 
 const tooltipBoxStyle = {
   background: "var(--bg-surface)",
@@ -9,12 +10,15 @@ const tooltipBoxStyle = {
 };
 
 export const PieTooltip = ({ active, payload }) => {
+  const { t } = useLanguage();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div style={tooltipBoxStyle}>
       <div style={{ color: d.fill, fontWeight: 700, fontSize: 13 }}>{d.name}</div>
-      <div style={{ color: "var(--text-secondary)", fontSize: 12 }}>{d.pct.toFixed(2)}% do portfólio</div>
+      <div style={{ color: "var(--text-secondary)", fontSize: 12 }}>
+        {d.pct.toFixed(2)}{t("ofPortfolio")}
+      </div>
       <div style={{ color: "var(--text-primary)", fontSize: 12 }}>{fmt(d.value)}</div>
     </div>
   );

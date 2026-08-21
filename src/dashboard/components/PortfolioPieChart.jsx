@@ -3,8 +3,10 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recha
 import { PieTooltip } from "./ChartTooltips";
 import { DownloadIcon } from "./DownloadIcon";
 import { downloadSvgAsPng, findChartSvg } from "../utils/exportChartImage";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export function PortfolioPieChart({ portfolioData }) {
+  const { t } = useLanguage();
   const chartWrapRef = useRef(null);
 
   const handleDownload = () => {
@@ -15,13 +17,13 @@ export function PortfolioPieChart({ portfolioData }) {
   return (
     <div className="chart-card">
       <div className="chart-header">
-        <div className="chart-title">DISTRIBUIÇÃO DO PORTFÓLIO</div>
+        <div className="chart-title">{t("pieTitle")}</div>
         {portfolioData.length > 0 && (
           <button
             className="chart-download-btn"
             onClick={handleDownload}
-            aria-label="Guardar imagem do gráfico"
-            title="Guardar imagem"
+            aria-label={t("saveChartImage")}
+            title={t("saveImage")}
           >
             <DownloadIcon />
           </button>
@@ -57,7 +59,7 @@ export function PortfolioPieChart({ portfolioData }) {
           </ResponsiveContainer>
         </div>
       ) : (
-        <div className="empty-state">Sem dados suficientes</div>
+        <div className="empty-state">{t("notEnoughData")}</div>
       )}
     </div>
   );

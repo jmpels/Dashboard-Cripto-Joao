@@ -1,14 +1,17 @@
-// Ícone da coin (imagem da CoinGecko) com fallback para as iniciais do símbolo.
+import { useState } from "react";
+
+// Ícone do ativo (imagem da CoinGecko ou da CDN de logos) com fallback para as
+// iniciais do símbolo caso não exista imagem ou a imagem falhe ao carregar.
 export function CoinIcon({ coin }) {
-  if (coin?.thumb) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  if (coin?.thumb && !imgFailed) {
     return (
       <img
         className="coin-icon"
         src={coin.thumb}
         alt={coin.symbol}
-        onError={(e) => {
-          e.target.style.display = "none";
-        }}
+        onError={() => setImgFailed(true)}
       />
     );
   }

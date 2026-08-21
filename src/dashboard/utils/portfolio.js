@@ -1,4 +1,5 @@
 import { PALETTE } from "../data/palette";
+import { getAssetType } from "./assetType";
 
 // Junta coins selecionadas + preços + quantidades numa lista pronta para os gráficos/tabela.
 export function buildPortfolioData({ selected, holdings, prices, coinsMap }) {
@@ -9,15 +10,25 @@ export function buildPortfolioData({ selected, holdings, prices, coinsMap }) {
       const price = prices[id]?.eur || 0;
       const change24h = prices[id]?.eur_24h_change ?? null;
       const qty = parseFloat(holdings[id]?.qty) || 0;
-      const invested = parseFloat(holdings[id]?.invested) || 0;
+      // buyPrice = preço de compra por unidade. Mantém compatibilidade com portfólios
+      // guardados antes desta mudança, que tinham o total investido diretamente.
+      const buyPrice = holdings[id]?.buyPrice != null
+        ? parseFloat(holdings[id].buyPrice) || 0
+        : qty > 0
+        ? (parseFloat(holdings[id]?.invested) || 0) / qty
+        : 0;
+      const invested = buyPrice * qty;
       const currentValue = qty * price;
       return {
         id,
+        type: getAssetType(id),
         name: coin?.symbol || id.toUpperCase(),
         fullName: coin?.name || id,
+        thumb: coin?.thumb,
         price,
         change24h,
         qty,
+        buyPrice,
         invested,
         value: currentValue,
         fill: PALETTE[i % PALETTE.length],
