@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchJsonCached } from "../utils/apiCache";
-import { corsProxyUrls } from "../utils/corsProxy";
 import { useLanguage } from "../i18n/LanguageContext";
 
 const TWELVE_DATA_KEY = import.meta.env.VITE_TWELVE_DATA_API_KEY;
@@ -25,8 +24,8 @@ async function fetchFxRate(currency, force) {
 // problemático arraste os restantes consigo (ver Promise.allSettled em useYahooPrices).
 async function fetchOneQuote(id, force) {
   const symbol = symbolFromId(id);
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
-  const { data } = await fetchJsonCached(corsProxyUrls(yahooUrl), { ttlMs: QUOTES_TTL_MS, force });
+  const url = `/yahoo/v8/finance/chart/${encodeURIComponent(symbol)}`;
+const { data } = await fetchJsonCached(url, { ttlMs: QUOTES_TTL_MS, force });
   const meta = data?.chart?.result?.[0]?.meta;
   if (!meta || typeof meta.regularMarketPrice !== "number") throw new Error("sem cotação");
 

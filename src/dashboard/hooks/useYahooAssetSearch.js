@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchJsonCached } from "../utils/apiCache";
-import { corsProxyUrls } from "../utils/corsProxy";
 import { logoUrlForSymbol } from "../utils/logos";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -37,8 +36,8 @@ export function useYahooAssetSearch({ quoteType, idPrefix, popularList, errorKey
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
-        const yahooUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(search.trim())}`;
-        const { data } = await fetchJsonCached(corsProxyUrls(yahooUrl), { ttlMs: SEARCH_TTL_MS });
+        const url = `/yahoo/v1/finance/search?q=${encodeURIComponent(search.trim())}`;
+        const { data } = await fetchJsonCached([url], { ttlMs: SEARCH_TTL_MS });
         const results = (data.quotes || [])
           .filter((r) => r.quoteType === quoteType && r.symbol)
           .slice(0, 30)

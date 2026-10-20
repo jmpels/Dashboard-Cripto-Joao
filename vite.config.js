@@ -30,4 +30,13 @@ export default defineConfig({
       // cache de preços é a de 1 minuto já feita no código da app via localStorage.
     }),
   ],
+  server: {
+    proxy: {
+      "/yahoo": {
+        target: "https://query1.finance.yahoo.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/yahoo/, ""),
+      },
+    },
+  },
 })
