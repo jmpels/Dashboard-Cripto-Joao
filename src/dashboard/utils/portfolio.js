@@ -1,40 +1,64 @@
 import { PALETTE } from "../data/palette";
 import { getAssetType } from "./assetType";
+import { baseId, sortPositionKeys } from "./positions";
 
-// Junta coins selecionadas + preços + quantidades numa lista pronta para os gráficos/tabela.
 export function buildPortfolioData({ selected, holdings, prices, coinsMap }) {
-  const portfolioData = selected
-    .filter((id) => prices[id] && holdings[id]?.qty > 0)
-    .map((id, i) => {
-      const coin = coinsMap[id];
-      const price = prices[id]?.eur || 0;
-      const change24h = prices[id]?.eur_24h_change ?? null;
-      const qty = parseFloat(holdings[id]?.qty) || 0;
-      // buyPrice = preço de compra por unidade. Mantém compatibilidade com portfólios
-      // guardados antes desta mudança, que tinham o total investido diretamente.
-      const buyPrice = holdings[id]?.buyPrice != null
-        ? parseFloat(holdings[id].buyPrice) || 0
+  const keys = sortPositionKeys(Object.keys(holdings), selected).filter(
+    (key) =>
+      selected.includes(baseId(key)) &&
+      prices[baseId(key)] &&
+      parseFloat(holdings[key]?.qty) > 0,
+  );
+
+  // One colour per ASSET (in sorted order), so all BTC rows share a colour
+  const colorIndex = {};
+  keys.forEach((key) => {
+    const id = baseId(key);
+    if (!(id in colorIndex)) colorIndex[id] = Object.keys(colorIndex).length;
+  });
+
+  // How many rows each asset has → decides whether we show "#1, #2"
+  const rowsPerAsset = {};
+  keys.forEach((key) => {
+    const id = baseId(key);
+    rowsPerAsset[id] = (rowsPerAsset[id] || 0) + 1;
+  });
+  const counter = {};
+
+  const portfolioData = keys.map((key) => {
+    const id = baseId(key);
+    const coin = coinsMap[id];
+    const price = prices[id]?.eur || 0;
+    const change24h = prices[id]?.eur_24h_change ?? null;
+    const qty = parseFloat(holdings[key]?.qty) || 0;
+    const buyPrice =
+      holdings[key]?.buyPrice != null
+        ? parseFloat(holdings[key].buyPrice) || 0
         : qty > 0
-        ? (parseFloat(holdings[id]?.invested) || 0) / qty
-        : 0;
-      const invested = buyPrice * qty;
-      const currentValue = qty * price;
-      return {
-        id,
-        type: getAssetType(id),
-        name: coin?.symbol || id.toUpperCase(),
-        fullName: coin?.name || id,
-        thumb: coin?.thumb,
-        price,
-        change24h,
-        qty,
-        buyPrice,
-        invested,
-        value: currentValue,
-        fill: PALETTE[i % PALETTE.length],
-        pct: 0,
-      };
-    });
+          ? (parseFloat(holdings[key]?.invested) || 0) / qty
+          : 0;
+
+    counter[id] = (counter[id] || 0) + 1;
+    const symbol = coin?.symbol || id.toUpperCase();
+
+    return {
+      id: key, // position key: unique per row
+      assetId: id, // shared by all positions of the asset
+      type: getAssetType(id),
+      name: rowsPerAsset[id] > 1 ? `${symbol} #${counter[id]}` : symbol,
+      symbol,
+      fullName: coin?.name || id,
+      thumb: coin?.thumb,
+      price,
+      change24h,
+      qty,
+      buyPrice,
+      invested: buyPrice * qty,
+      value: qty * price,
+      fill: PALETTE[colorIndex[id] % PALETTE.length],
+      pct: 0,
+    };
+  });
 
   const totalValue = portfolioData.reduce((s, d) => s + d.value, 0);
   const totalInvested = portfolioData.reduce((s, d) => s + d.invested, 0);
@@ -42,10 +66,31 @@ export function buildPortfolioData({ selected, holdings, prices, coinsMap }) {
     d.pct = totalValue > 0 ? (d.value / totalValue) * 100 : 0;
   });
 
+  // One entry per asset (for pie + bar). Keeps the same shape as a table row.
+  const byAsset = {};
+  portfolioData.forEach((d) => {
+    const a = (byAsset[d.assetId] ??= {
+      ...d,
+      id: d.assetId,
+      name: d.symbol,
+      qty: 0,
+      invested: 0,
+      value: 0,
+    });
+    a.qty += d.qty;
+    a.invested += d.invested;
+    a.value += d.value;
+  });
+  const pieData = Object.values(byAsset).map((a) => ({
+    ...a,
+    buyPrice: a.qty > 0 ? a.invested / a.qty : 0, // weighted average
+    pct: totalValue > 0 ? (a.value / totalValue) * 100 : 0,
+  }));
+
   const pnl = totalValue - totalInvested;
   const pnlPct = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
 
-  const barData = portfolioData
+  const barData = pieData
     .filter((d) => d.invested > 0)
     .map((d) => ({
       name: d.name,
@@ -54,5 +99,13 @@ export function buildPortfolioData({ selected, holdings, prices, coinsMap }) {
       fill: d.fill,
     }));
 
-  return { portfolioData, totalValue, totalInvested, pnl, pnlPct, barData };
+  return {
+    portfolioData,
+    pieData,
+    totalValue,
+    totalInvested,
+    pnl,
+    pnlPct,
+    barData,
+  };
 }

@@ -12,6 +12,7 @@ import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { useTheme } from "./hooks/useTheme";
 import { buildPortfolioData } from "./utils/portfolio";
 import { getAssetType } from "./utils/assetType";
+import { baseId, isVariant, sortPositionKeys, removeAssetPositions } from "./utils/positions";
 import "./dashboard.css";
 
 // ETFs e ações vêm ambos da Yahoo Finance e partilham o mesmo hook de preços —
@@ -22,13 +23,19 @@ const hasSavedHoldings = (holdings) =>
   Object.values(holdings).some((h) => parseFloat(h?.qty) > 0);
 
 export default function CryptoDashboard() {
-  const [selected, setSelected] = useLocalStorageState("cryptfolio:selected", []);
-  const [holdings, setHoldings] = useLocalStorageState("cryptfolio:holdings", {});
+  const [selected, setSelected] = useLocalStorageState(
+    "cryptfolio:selected",
+    [],
+  );
+  const [holdings, setHoldings] = useLocalStorageState(
+    "cryptfolio:holdings",
+    {},
+  );
   const { theme, toggleTheme } = useTheme();
 
   // Se já havia um portfólio guardado (visita anterior), entra direto no dashboard.
   const [step, setStep] = useState(() =>
-    selected.length && hasSavedHoldings(holdings) ? "dashboard" : "select"
+    selected.length && hasSavedHoldings(holdings) ? "dashboard" : "select",
   );
 
   const coinSearch = useCoinSearch();
@@ -36,43 +43,72 @@ export default function CryptoDashboard() {
   const stockSearch = useStockSearch();
   // assetsMap junta moedas, ETFs e ações num só sítio — o resto do código trata
   // tudo como "ativos" genéricos, sem precisar de saber o tipo de cada um.
-  const assetsMap = { ...coinSearch.coinsMap, ...etfSearch.etfsMap, ...stockSearch.stocksMap };
+  const assetsMap = {
+    ...coinSearch.coinsMap,
+    ...etfSearch.etfsMap,
+    ...stockSearch.stocksMap,
+  };
 
   const isDashboardActive = step === "dashboard";
   // useMemo: sem isto, cada render criava arrays novos e os hooks de preços
   // (que dependem da identidade de `selected`) disparavam pedidos repetidos.
-  const selectedCoins = useMemo(() => selected.filter((id) => !isYahooId(id)), [selected]);
-  const selectedYahooAssets = useMemo(() => selected.filter(isYahooId), [selected]);
+  const selectedCoins = useMemo(
+    () => selected.filter((id) => !isYahooId(id)),
+    [selected],
+  );
+  const selectedYahooAssets = useMemo(
+    () => selected.filter(isYahooId),
+    [selected],
+  );
 
   const cryptoPrices = usePrices(selectedCoins, { active: isDashboardActive });
-  const yahooPrices = useYahooPrices(selectedYahooAssets, { active: isDashboardActive });
+  const yahooPrices = useYahooPrices(selectedYahooAssets, {
+    active: isDashboardActive,
+  });
 
   const prices = { ...cryptoPrices.prices, ...yahooPrices.prices };
   const loading = cryptoPrices.loading || yahooPrices.loading;
   const error = cryptoPrices.error || yahooPrices.error;
-  const lastUpdated = [cryptoPrices.lastUpdated, yahooPrices.lastUpdated]
-    .filter(Boolean)
-    .sort((a, b) => b - a)[0] ?? null;
+  const lastUpdated =
+    [cryptoPrices.lastUpdated, yahooPrices.lastUpdated]
+      .filter(Boolean)
+      .sort((a, b) => b - a)[0] ?? null;
   const fetchPrices = (force) => {
     cryptoPrices.fetchPrices(force);
     yahooPrices.fetchPrices(force);
   };
 
-  const toggleCoin = (id) =>
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const toggleCoin = (id) => {
+    if (selected.includes(id)) {
+      setHoldings((h) => removeAssetPositions(h, id));
+    }
+    setSelected((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
+    );
+  };
 
-  const { portfolioData, totalValue, totalInvested, pnl, pnlPct, barData } = buildPortfolioData({
-    selected,
-    holdings,
-    prices,
-    coinsMap: assetsMap,
-  });
+  const { portfolioData, pieData, totalValue, totalInvested, pnl, pnlPct, barData } =
+    buildPortfolioData({
+      selected,
+      holdings,
+      prices,
+      coinsMap: assetsMap,
+    });
 
   // Ativos já escolhidos (com quantidade definida) cujo preço ainda não chegou —
   // mostrados na tabela como linhas "a carregar" em vez de simplesmente não aparecerem.
-  const pendingAssets = selected
-    .filter((id) => (parseFloat(holdings[id]?.qty) || 0) > 0 && !prices[id])
-    .map((id) => ({ ...assetsMap[id], id, type: getAssetType(id) }));
+  const pendingAssets = sortPositionKeys(Object.keys(holdings)
+    .filter((key) => selected.includes(baseId(key)))
+    .filter((key) => {
+      const qty = parseFloat(holdings[key]?.qty) || 0;
+      const hasPrice = !!prices[baseId(key)];
+      return (qty > 0 && !hasPrice) || (isVariant(key) && qty <= 0);
+    })
+    .map((key) => ({
+      ...assetsMap[baseId(key)],
+      id: key,
+      type: getAssetType(baseId(key)),
+    })));
 
   const resetAll = () => {
     setStep("select");
@@ -124,7 +160,11 @@ export default function CryptoDashboard() {
               error={error}
               portfolioData={portfolioData}
               pendingAssets={pendingAssets}
-              refreshingByType={{ crypto: cryptoPrices.loading, etf: yahooPrices.loading, stock: yahooPrices.loading }}
+              refreshingByType={{
+                crypto: cryptoPrices.loading,
+                etf: yahooPrices.loading,
+                stock: yahooPrices.loading,
+              }}
               barData={barData}
               totalValue={totalValue}
               totalInvested={totalInvested}
@@ -135,6 +175,7 @@ export default function CryptoDashboard() {
               onEdit={() => setStep("amounts")}
               onManageCoins={() => setStep("select")}
               onReset={resetAll}
+              pieData={pieData}
             />
           )}
         </div>

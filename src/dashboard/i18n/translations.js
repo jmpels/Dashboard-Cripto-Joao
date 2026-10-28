@@ -14,12 +14,16 @@ export const translations = {
     typeCrypto: "₿ CRIPTO",
     typeEtf: "📈 ETFs",
     typeStock: "📊 AÇÕES",
-    placeholderCrypto: "🔍 Pesquisar qualquer moeda (ex: pepe, jupiter, render...)",
-    placeholderEtf: "🔍 Pesquisar ETF por nome ou ticker (ex: SPY, vanguard...)",
-    placeholderStock: "🔍 Pesquisar ação por nome ou ticker (ex: apple, TSLA...)",
+    placeholderCrypto:
+      "🔍 Pesquisar qualquer moeda (ex: pepe, jupiter, render...)",
+    placeholderEtf:
+      "🔍 Pesquisar ETF por nome ou ticker (ex: SPY, vanguard...)",
+    placeholderStock:
+      "🔍 Pesquisar ação por nome ou ticker (ex: apple, TSLA...)",
 
     selectTitle: "Seleciona os teus ativos",
-    selectSubtitle: "Criptomoedas (CoinGecko), ETFs e ações de qualquer bolsa do mundo (Yahoo Finance) — mistura tudo no mesmo portfólio.",
+    selectSubtitle:
+      "Criptomoedas (CoinGecko), ETFs e ações de qualquer bolsa do mundo (Yahoo Finance) — mistura tudo no mesmo portfólio.",
     // Frases dedicadas por tipo (em vez de "{noun}s" genérico) porque o plural de
     // "ação" é irregular (ações, não "açãos") e o género varia por palavra.
     searchingCrypto: "A pesquisar moedas... pode demorar alguns segundos",
@@ -37,7 +41,8 @@ export const translations = {
 
     // Amounts step
     amountsTitle: "Quantidades & Investimento",
-    amountsSubtitle: "Insere a quantidade que tens de cada ativo e, opcionalmente, o preço a que compraste cada unidade (em EUR)",
+    amountsSubtitle:
+      "Insere a quantidade que tens de cada ativo e, opcionalmente, o preço a que compraste cada unidade (em EUR)",
     quantity: "QUANTIDADE",
     quantityPlaceholder: "ex: 0.5",
     buyPriceLabel: "PREÇO DE COMPRA / UNIDADE (EUR) — opcional",
@@ -94,16 +99,27 @@ export const translations = {
     typeStockBadge: "AÇÃO",
     marketCap: "market cap",
     loadingAsset: "a carregar preço...",
-    breakdownLoadingNotice: "Alguns preços podem demorar alguns segundos a atualizar, especialmente ETFs e ações.",
+    breakdownLoadingNotice:
+      "Alguns preços podem demorar alguns segundos a atualizar, especialmente ETFs e ações.",
     refreshingAsset: "A atualizar preço...",
 
     // Erros e estados vindos dos hooks
     errorSearchCoins: "Não foi possível pesquisar moedas de momento.",
     errorSearchEtfs: "Não foi possível pesquisar ETFs de momento.",
     errorSearchStocks: "Não foi possível pesquisar ações de momento.",
-    errorPricesCrypto: "Não foi possível obter preços reais neste momento. A usar valores simulados.",
-    errorPricesYahooPartial: "Não foi possível atualizar todos os ativos — a mostrar os últimos preços conhecidos onde possível.",
-    errorPricesYahoo: "Não foi possível obter preços neste momento. A usar valores simulados.",
+    errorPricesCrypto:
+      "Não foi possível obter preços reais neste momento. A usar valores simulados.",
+    errorPricesYahooPartial:
+      "Não foi possível atualizar todos os ativos — a mostrar os últimos preços conhecidos onde possível.",
+    errorPricesYahoo:
+      "Não foi possível obter preços neste momento. A usar valores simulados.",
+    addVariant: "Adicionar nova compra",
+    removeVariant: "Remover esta compra",
+    addVariantTitle: "Nova compra de",
+    buyPriceUnit: "PREÇO DE COMPRA / UNIDADE",
+    totalPaid: "TOTAL INVESTIDO",
+    cancel: "CANCELAR",
+    add: "ADICIONAR",
   },
   en: {
     // Header
@@ -125,7 +141,8 @@ export const translations = {
     placeholderStock: "🔍 Search stock by name or ticker (e.g. apple, TSLA...)",
 
     selectTitle: "Select your assets",
-    selectSubtitle: "Crypto (CoinGecko), ETFs and stocks from any exchange in the world (Yahoo Finance) — mix them all in the same portfolio.",
+    selectSubtitle:
+      "Crypto (CoinGecko), ETFs and stocks from any exchange in the world (Yahoo Finance) — mix them all in the same portfolio.",
     searchingCrypto: "Searching coins... this can take a few seconds",
     searchingEtf: "Searching ETFs... this can take a few seconds",
     searchingStock: "Searching stocks... this can take a few seconds",
@@ -141,7 +158,8 @@ export const translations = {
 
     // Amounts step
     amountsTitle: "Quantities & Investment",
-    amountsSubtitle: "Enter how much you hold of each asset and, optionally, the price you paid per unit (in EUR)",
+    amountsSubtitle:
+      "Enter how much you hold of each asset and, optionally, the price you paid per unit (in EUR)",
     quantity: "QUANTITY",
     quantityPlaceholder: "e.g. 0.5",
     buyPriceLabel: "BUY PRICE / UNIT (EUR) — optional",
@@ -198,15 +216,25 @@ export const translations = {
     typeStockBadge: "STOCK",
     marketCap: "market cap",
     loadingAsset: "loading price...",
-    breakdownLoadingNotice: "Some prices can take a few seconds to update, especially ETFs and stocks.",
+    breakdownLoadingNotice:
+      "Some prices can take a few seconds to update, especially ETFs and stocks.",
     refreshingAsset: "Updating price...",
 
     // Errors and states coming from the hooks
     errorSearchCoins: "Couldn't search coins right now.",
     errorSearchEtfs: "Couldn't search ETFs right now.",
     errorSearchStocks: "Couldn't search stocks right now.",
-    errorPricesCrypto: "Couldn't get live prices right now. Using simulated values.",
-    errorPricesYahooPartial: "Couldn't update all assets — showing the last known prices where possible.",
+    errorPricesCrypto:
+      "Couldn't get live prices right now. Using simulated values.",
+    errorPricesYahooPartial:
+      "Couldn't update all assets — showing the last known prices where possible.",
     errorPricesYahoo: "Couldn't get prices right now. Using simulated values.",
+    addVariant: "Add another purchase",
+    removeVariant: "Remove this purchase",
+    addVariantTitle: "New purchase of",
+    buyPriceUnit: "BUY PRICE / UNIT",
+    totalPaid: "TOTAL INVESTED",
+    cancel: "CANCEL",
+    add: "ADD",
   },
 };

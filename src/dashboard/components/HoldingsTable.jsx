@@ -1,7 +1,33 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { fmt, fmtPrice } from "../utils/format";
 import { useLanguage } from "../i18n/LanguageContext";
 import { CoinIcon } from "./CoinIcon";
+import { isVariant } from "../utils/positions";
+
+function RowActions({ d, t, onAddVariant, onRemoveVariant }) {
+  return (
+    <div className="row-actions">
+      <button
+        className="icon-btn"
+        onClick={() => onAddVariant(d.assetId)}
+        title={t("addVariant")}
+        aria-label={t("addVariant")}
+      >
+        +
+      </button>
+      {isVariant(d.id) && (
+        <button
+          className="icon-btn icon-btn--danger"
+          onClick={() => onRemoveVariant(d.id)}
+          title={t("removeVariant")}
+          aria-label={t("removeVariant")}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
 
 // Input isolado com o seu próprio rascunho: só escreve em `holdings` (via onCommit)
 // ao sair do campo. Assim, limpar o valor para escrever um novo (ex: "2" -> "2.5")
@@ -47,7 +73,15 @@ function sortValue(d, key) {
   }
 }
 
-export function HoldingsTable({ portfolioData, pendingAssets = [], refreshingByType = {}, holdings, onQtyChange }) {
+export function HoldingsTable({
+  portfolioData,
+  pendingAssets = [],
+  refreshingByType = {},
+  holdings,
+  onQtyChange,
+  onAddVariant,
+  onRemoveVariant,
+}) {
   const { t } = useLanguage();
   const [sortKey, setSortKey] = useState("value");
   const [sortDir, setSortDir] = useState("desc");
@@ -61,7 +95,11 @@ export function HoldingsTable({ portfolioData, pendingAssets = [], refreshingByT
     { key: "change24h", label: t("sortChange24h") },
   ];
 
-  const ASSET_TYPE_LABEL = { crypto: t("typeCryptoBadge"), etf: t("typeEtfBadge"), stock: t("typeStockBadge") };
+  const ASSET_TYPE_LABEL = {
+    crypto: t("typeCryptoBadge"),
+    etf: t("typeEtfBadge"),
+    stock: t("typeStockBadge"),
+  };
 
   const sortedData = [...portfolioData].sort((a, b) => {
     const va = sortValue(a, sortKey);
@@ -97,8 +135,14 @@ export function HoldingsTable({ portfolioData, pendingAssets = [], refreshingByT
           </button>
         </div>
       </div>
-      {(pendingAssets.length > 0 || refreshingByType.crypto || refreshingByType.etf || refreshingByType.stock) && (
-        <div className="search-status-loading" style={{ marginBottom: 12, fontSize: 11 }}>
+      {(pendingAssets.length > 0 ||
+        refreshingByType.crypto ||
+        refreshingByType.etf ||
+        refreshingByType.stock) && (
+        <div
+          className="search-status-loading"
+          style={{ marginBottom: 12, fontSize: 11 }}
+        >
           <span className="spin-icon">⟳</span> {t("breakdownLoadingNotice")}
         </div>
       )}
@@ -119,74 +163,157 @@ export function HoldingsTable({ portfolioData, pendingAssets = [], refreshingByT
           <tbody>
             {sortedData.map((d) => {
               const coinPnl = d.invested > 0 ? d.value - d.invested : null;
-              const coinPnlPct = d.invested > 0 ? ((d.value - d.invested) / d.invested) * 100 : null;
+              const coinPnlPct =
+                d.invested > 0
+                  ? ((d.value - d.invested) / d.invested) * 100
+                  : null;
+
+              // Built once, rendered in two places (mobile cell + desktop sub-row)
+              const actions = (
+                <div className="row-actions">
+                  <button
+                    className="icon-btn"
+                    onClick={() => onAddVariant(d.assetId)}
+                    title={t("addVariant")}
+                    aria-label={t("addVariant")}
+                  >
+                    +
+                  </button>
+                  {isVariant(d.id) && (
+                    <button
+                      className="icon-btn icon-btn--danger"
+                      onClick={() => onRemoveVariant(d.id)}
+                      title={t("removeVariant")}
+                      aria-label={t("removeVariant")}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              );
+
               return (
-                <tr key={d.id}>
-                  <td className="asset-cell" data-label={t("colAsset")}>
-                    <CoinIcon coin={{ thumb: d.thumb, symbol: d.name }} />
-                    <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, marginLeft: 8 }}>{d.name}</span>
-                    <span className={`type-badge type-badge-${d.type}`}>{ASSET_TYPE_LABEL[d.type]}</span>
-                    <div style={{ color: "var(--text-secondary)", marginLeft: 14 }}>{d.fullName}</div>
-                  </td>
-                  <td className="mono" data-label={t("colPrice")}>
-                    {fmtPrice(d.price)}
-                    {refreshingByType[d.type] && (
-                      <span className="spin-icon" style={{ marginLeft: 6 }} title={t("refreshingAsset")}>
-                        ⟳
+                <Fragment key={d.id}>
+                  <tr>
+                    <td className="asset-cell" data-label={t("colAsset")}>
+                      <CoinIcon coin={{ thumb: d.thumb, symbol: d.name }} />
+                      <span
+                        style={{
+                          fontFamily: "'Syne', sans-serif",
+                          fontWeight: 700,
+                          marginLeft: 8,
+                        }}
+                      >
+                        {d.name}
                       </span>
-                    )}
-                  </td>
-                  <td className="mono" data-label={t("col24h")}>
-                    {d.change24h !== null ? (
-                      <span className={d.change24h >= 0 ? "pnl-pos" : "pnl-neg"}>
-                        {d.change24h >= 0 ? "▲" : "▼"} {Math.abs(d.change24h).toFixed(1)}%
+                      <span className={`type-badge type-badge-${d.type}`}>
+                        {ASSET_TYPE_LABEL[d.type]}
                       </span>
-                    ) : (
-                      <span style={{ color: "var(--text-tertiary)" }}>—</span>
-                    )}
-                  </td>
-                  <td className="mono" data-label={t("colQuantity")}>
-                    <EditableQtyCell
-                      id={d.id}
-                      value={holdings[d.id]?.qty ?? String(d.qty)}
-                      onCommit={onQtyChange}
-                    />
-                  </td>
-                  <td className="mono" data-label={t("colCurrentValue")}>
-                    {fmt(d.value)}
-                  </td>
-                  <td className="mono" data-label={t("colInvested")}>
-                    {d.invested > 0 ? fmt(d.invested) : <span style={{ color: "var(--text-tertiary)" }}>—</span>}
-                  </td>
-                  <td className="mono" data-label="P&L">
-                    {coinPnl !== null ? (
-                      <span className={coinPnl >= 0 ? "pnl-pos" : "pnl-neg"}>
-                        {coinPnl >= 0 ? "+" : ""}
-                        {fmt(coinPnl)}{" "}
-                        <span>
-                          ({coinPnlPct >= 0 ? "+" : ""}
-                          {coinPnlPct.toFixed(1)}%)
+                      <div
+                        style={{
+                          color: "var(--text-secondary)",
+                          marginLeft: 14,
+                        }}
+                      >
+                        {d.fullName}
+                      </div>
+                    </td>
+
+                    <td className="mono" data-label={t("colPrice")}>
+                      {fmtPrice(d.price)}
+                      {refreshingByType[d.type] && (
+                        <span
+                          className="spin-icon"
+                          style={{ marginLeft: 6 }}
+                          title={t("refreshingAsset")}
+                        >
+                          ⟳
                         </span>
-                      </span>
-                    ) : (
-                      <span style={{ color: "var(--text-tertiary)" }}>—</span>
-                    )}
-                  </td>
-                  <td className="mono" data-label={t("colPct")}>
-                    {d.pct.toFixed(1)}%
-                  </td>
-                </tr>
+                      )}
+                    </td>
+
+                    <td className="mono" data-label={t("col24h")}>
+                      {d.change24h !== null ? (
+                        <span
+                          className={d.change24h >= 0 ? "pnl-pos" : "pnl-neg"}
+                        >
+                          {d.change24h >= 0 ? "▲" : "▼"}{" "}
+                          {Math.abs(d.change24h).toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-tertiary)" }}>—</span>
+                      )}
+                    </td>
+
+                    <td className="mono" data-label={t("colQuantity")}>
+                      <EditableQtyCell
+                        id={d.id}
+                        value={holdings[d.id]?.qty ?? String(d.qty)}
+                        onCommit={onQtyChange}
+                      />
+                    </td>
+
+                    <td className="mono" data-label={t("colCurrentValue")}>
+                      {fmt(d.value)}
+                    </td>
+
+                    <td className="mono" data-label={t("colInvested")}>
+                      {d.invested > 0 ? (
+                        fmt(d.invested)
+                      ) : (
+                        <span style={{ color: "var(--text-tertiary)" }}>—</span>
+                      )}
+                    </td>
+
+                    <td className="mono" data-label="P&L">
+                      {coinPnl !== null ? (
+                        <span className={coinPnl >= 0 ? "pnl-pos" : "pnl-neg"}>
+                          {coinPnl >= 0 ? "+" : ""}
+                          {fmt(coinPnl)}{" "}
+                          <span>
+                            ({coinPnlPct >= 0 ? "+" : ""}
+                            {coinPnlPct.toFixed(1)}%)
+                          </span>
+                        </span>
+                      ) : (
+                        <span style={{ color: "var(--text-tertiary)" }}>—</span>
+                      )}
+                    </td>
+                    <td className="mono" data-label={t("colPct")}>
+                      {d.pct.toFixed(1)}%
+                    </td>
+                    {/* mobile only: last line of the card */}
+                    <td className="actions-cell">{actions}</td>
+                  </tr>
+
+                  {/* desktop only (hidden on mobile via CSS) */}
+                  <tr className="actions-row">
+                    <td colSpan={8}>{actions}</td>
+                  </tr>
+                </Fragment>
               );
             })}
             {pendingAssets.map((a) => (
               <tr key={a.id} className="pending-row" aria-busy="true">
                 <td className="asset-cell" data-label={t("colAsset")}>
                   <CoinIcon coin={a} />
-                  <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, marginLeft: 8 }}>
+                  <span
+                    style={{
+                      fontFamily: "'Syne', sans-serif",
+                      fontWeight: 700,
+                      marginLeft: 8,
+                    }}
+                  >
                     {a.symbol}
                   </span>
-                  <span className={`type-badge type-badge-${a.type}`}>{ASSET_TYPE_LABEL[a.type]}</span>
-                  <div style={{ color: "var(--text-tertiary)", marginLeft: 14 }}>{t("loadingAsset")}</div>
+                  <span className={`type-badge type-badge-${a.type}`}>
+                    {ASSET_TYPE_LABEL[a.type]}
+                  </span>
+                  <div
+                    style={{ color: "var(--text-tertiary)", marginLeft: 14 }}
+                  >
+                    {t("loadingAsset")}
+                  </div>
                 </td>
                 <td className="mono" data-label={t("colPrice")}>
                   <span className="skeleton-block skeleton-cell" />

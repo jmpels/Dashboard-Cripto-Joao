@@ -4,6 +4,9 @@ import { PortfolioBarChart } from "../components/PortfolioBarChart";
 import { HoldingsTable } from "../components/HoldingsTable";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
 import { useLanguage } from "../i18n/LanguageContext";
+import { useState } from "react";
+import { AddVariantModal } from "../components/AddVariantModal";
+import { addPosition, removePosition } from "../utils/positions";
 
 export function DashboardStep({
   loading,
@@ -21,6 +24,7 @@ export function DashboardStep({
   onEdit,
   onManageCoins,
   onReset,
+  pieData,
 }) {
   const { t } = useLanguage();
   // Só mostra o ecrã de loading inteiro na primeira vez; as atualizações
@@ -31,6 +35,18 @@ export function DashboardStep({
 
   const updateQty = (id, qty) =>
     setHoldings((h) => ({ ...h, [id]: { ...h[id], qty } }));
+
+  const removeVariant = (key) => setHoldings((h) => removePosition(h, key));
+
+  const [variantFor, setVariantFor] = useState(null);
+
+  const openVariantModal = (id) => {
+    if (typeof id !== "string") {
+      console.error("onAddVariant expected an asset id string, got:", id);
+      return;
+    }
+    setVariantFor(id);
+  };
 
   return (
     <>
@@ -55,11 +71,11 @@ export function DashboardStep({
         totalInvested={totalInvested}
         pnl={pnl}
         pnlPct={pnlPct}
-        coinCount={portfolioData.length}
+        coinCount={pieData.length}
       />
 
       <div className="charts-grid">
-        <PortfolioPieChart portfolioData={portfolioData} />
+        <PortfolioPieChart portfolioData={pieData} />
         <PortfolioBarChart barData={barData} />
       </div>
 
@@ -69,9 +85,25 @@ export function DashboardStep({
         refreshingByType={refreshingByType}
         holdings={holdings}
         onQtyChange={updateQty}
+        onAddVariant={openVariantModal}
+        onRemoveVariant={removeVariant}
       />
+      {variantFor && (
+        <AddVariantModal
+          symbol={
+            pieData.find((r) => r.assetId === variantFor)?.name ?? variantFor
+          }
+          onSubmit={(data) => {
+            setHoldings((h) => addPosition(h, variantFor, data));
+            setVariantFor(null);
+          }}
+          onClose={() => setVariantFor(null)}
+        />
+      )}
 
-      <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <div
+        style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}
+      >
         <button className="btn-ghost" onClick={onEdit}>
           {t("editAmounts")}
         </button>
