@@ -120,6 +120,9 @@ export const translations = {
     totalPaid: "TOTAL INVESTIDO",
     cancel: "CANCELAR",
     add: "ADICIONAR",
+    barView: "Vista do gráfico",
+    viewByAsset: "Por ativo",
+    viewByPurchase: "Por compra",
   },
   en: {
     // Header
@@ -236,5 +239,8 @@ export const translations = {
     totalPaid: "TOTAL INVESTED",
     cancel: "CANCEL",
     add: "ADD",
+    barView: "Chart view",
+    viewByAsset: "By asset",
+    viewByPurchase: "By purchase",
   },
 };

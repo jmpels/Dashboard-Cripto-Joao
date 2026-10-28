@@ -4,9 +4,10 @@ import { PortfolioBarChart } from "../components/PortfolioBarChart";
 import { HoldingsTable } from "../components/HoldingsTable";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
 import { useLanguage } from "../i18n/LanguageContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddVariantModal } from "../components/AddVariantModal";
 import { addPosition, removePosition } from "../utils/positions";
+
 
 export function DashboardStep({
   loading,
@@ -25,6 +26,7 @@ export function DashboardStep({
   onManageCoins,
   onReset,
   pieData,
+  barDataByPosition,
 }) {
   const { t } = useLanguage();
   // Só mostra o ecrã de loading inteiro na primeira vez; as atualizações
@@ -40,6 +42,8 @@ export function DashboardStep({
 
   const [variantFor, setVariantFor] = useState(null);
 
+  const hasVariants = portfolioData.length > pieData.length;
+
   const openVariantModal = (id) => {
     if (typeof id !== "string") {
       console.error("onAddVariant expected an asset id string, got:", id);
@@ -47,6 +51,20 @@ export function DashboardStep({
     }
     setVariantFor(id);
   };
+
+  const a = portfolioData
+    .filter((d) => d.invested > 0)
+    .map((d) => ({
+      name: d.name, // "BTC #1", "BTC #2" (or just "BTC" if it has one row)
+      Investido: +d.invested.toFixed(2),
+      Atual: +d.value.toFixed(2),
+      fill: d.fill, // same colour for all rows of an asset
+    }));
+
+  useEffect(() => {
+    console.log(barData);
+    console.log(a);
+  }, [barData, a]);
 
   return (
     <>
@@ -76,7 +94,11 @@ export function DashboardStep({
 
       <div className="charts-grid">
         <PortfolioPieChart portfolioData={pieData} />
-        <PortfolioBarChart barData={barData} />
+        <PortfolioBarChart
+          barData={barData}
+          barDataByPosition={barDataByPosition}
+          canSplit={hasVariants}
+        />
       </div>
 
       <HoldingsTable

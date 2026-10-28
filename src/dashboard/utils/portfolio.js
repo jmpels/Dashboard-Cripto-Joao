@@ -90,14 +90,18 @@ export function buildPortfolioData({ selected, holdings, prices, coinsMap }) {
   const pnl = totalValue - totalInvested;
   const pnlPct = totalInvested > 0 ? (pnl / totalInvested) * 100 : 0;
 
-  const barData = pieData
-    .filter((d) => d.invested > 0)
-    .map((d) => ({
-      name: d.name,
-      Investido: +d.invested.toFixed(2),
-      Atual: +d.value.toFixed(2),
-      fill: d.fill,
-    }));
+  const toBarData = (rows) =>
+    rows
+      .filter((d) => d.invested > 0)
+      .map((d) => ({
+        name: d.name,
+        Investido: +d.invested.toFixed(2),
+        Atual: +d.value.toFixed(2),
+        fill: d.fill,
+      }));
+
+  const barData = toBarData(pieData); // one bar pair per asset (totals)
+  const barDataByPosition = toBarData(portfolioData); // one bar pair per purchase
 
   return {
     portfolioData,
@@ -107,5 +111,6 @@ export function buildPortfolioData({ selected, holdings, prices, coinsMap }) {
     pnl,
     pnlPct,
     barData,
+    barDataByPosition,
   };
 }

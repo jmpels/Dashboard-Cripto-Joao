@@ -12,7 +12,12 @@ import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { useTheme } from "./hooks/useTheme";
 import { buildPortfolioData } from "./utils/portfolio";
 import { getAssetType } from "./utils/assetType";
-import { baseId, isVariant, sortPositionKeys, removeAssetPositions } from "./utils/positions";
+import {
+  baseId,
+  isVariant,
+  sortPositionKeys,
+  removeAssetPositions,
+} from "./utils/positions";
 import "./dashboard.css";
 
 // ETFs e ações vêm ambos da Yahoo Finance e partilham o mesmo hook de preços —
@@ -80,35 +85,44 @@ export default function CryptoDashboard() {
 
   const toggleCoin = (id) => {
     if (selected.includes(id)) {
-      setHoldings((h) => removeAssetPositions(h, id));
+      setHoldings((h) => {
+        const next = removeAssetPositions(h, id);
+        console.log("before:", Object.keys(h), "after:", Object.keys(next));
+        return next;
+      });
     }
     setSelected((s) =>
       s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
     );
   };
 
-  const { portfolioData, pieData, totalValue, totalInvested, pnl, pnlPct, barData } =
-    buildPortfolioData({
-      selected,
-      holdings,
-      prices,
-      coinsMap: assetsMap,
-    });
+  const {
+    portfolioData,
+    pieData,
+    totalValue,
+    totalInvested,
+    pnl,
+    pnlPct,
+    barData,
+    barDataByPosition,
+  } = buildPortfolioData({ selected, holdings, prices, coinsMap: assetsMap });
 
   // Ativos já escolhidos (com quantidade definida) cujo preço ainda não chegou —
   // mostrados na tabela como linhas "a carregar" em vez de simplesmente não aparecerem.
-  const pendingAssets = sortPositionKeys(Object.keys(holdings)
-    .filter((key) => selected.includes(baseId(key)))
-    .filter((key) => {
-      const qty = parseFloat(holdings[key]?.qty) || 0;
-      const hasPrice = !!prices[baseId(key)];
-      return (qty > 0 && !hasPrice) || (isVariant(key) && qty <= 0);
-    })
-    .map((key) => ({
-      ...assetsMap[baseId(key)],
-      id: key,
-      type: getAssetType(baseId(key)),
-    })));
+  const pendingAssets = sortPositionKeys(
+    Object.keys(holdings)
+      .filter((key) => selected.includes(baseId(key)))
+      .filter((key) => {
+        const qty = parseFloat(holdings[key]?.qty) || 0;
+        const hasPrice = !!prices[baseId(key)];
+        return (qty > 0 && !hasPrice) || (isVariant(key) && qty <= 0);
+      })
+      .map((key) => ({
+        ...assetsMap[baseId(key)],
+        id: key,
+        type: getAssetType(baseId(key)),
+      })),
+  );
 
   const resetAll = () => {
     setStep("select");
@@ -166,6 +180,7 @@ export default function CryptoDashboard() {
                 stock: yahooPrices.loading,
               }}
               barData={barData}
+              barDataByPosition={barDataByPosition}
               totalValue={totalValue}
               totalInvested={totalInvested}
               pnl={pnl}
