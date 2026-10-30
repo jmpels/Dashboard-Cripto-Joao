@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
 import { fetchJsonCached } from "../utils/apiCache";
+import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "../i18n/LanguageContext";
 
 const TWELVE_DATA_KEY = import.meta.env.VITE_TWELVE_DATA_API_KEY;
@@ -13,7 +13,7 @@ async function fetchFxRate(currency, force) {
   if (currency === "EUR") return 1;
   const { data } = await fetchJsonCached(
     `https://api.twelvedata.com/exchange_rate?symbol=${currency}/EUR&apikey=${TWELVE_DATA_KEY}`,
-    { ttlMs: FX_TTL_MS, force }
+    { ttlMs: FX_TTL_MS, force },
   );
   return data?.rate ?? 1;
 }
@@ -25,20 +25,25 @@ async function fetchFxRate(currency, force) {
 async function fetchOneQuote(id, force) {
   const symbol = symbolFromId(id);
   const url = `/yahoo/v8/finance/chart/${encodeURIComponent(symbol)}`;
-const { data } = await fetchJsonCached(url, { ttlMs: QUOTES_TTL_MS, force });
+  const { data } = await fetchJsonCached(url, { ttlMs: QUOTES_TTL_MS, force });
   const meta = data?.chart?.result?.[0]?.meta;
-  if (!meta || typeof meta.regularMarketPrice !== "number") throw new Error("sem cotação");
+  if (!meta || typeof meta.regularMarketPrice !== "number")
+    throw new Error("sem cotação");
 
   // Algumas bolsas do Reino Unido reportam em pence (GBp/GBX) em vez de libras.
   const divisor = meta.currency === "GBp" || meta.currency === "GBX" ? 100 : 1;
   const currency = divisor === 100 ? "GBP" : meta.currency;
   const price = meta.regularMarketPrice / divisor;
-  const previousClose = (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice) / divisor;
+  const previousClose =
+    (meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice) /
+    divisor;
 
   const rate = await fetchFxRate(currency, force);
   return {
     eur: price * rate,
-    eur_24h_change: previousClose ? ((price - previousClose) / previousClose) * 100 : null,
+    eur_24h_change: previousClose
+      ? ((price - previousClose) / previousClose) * 100
+      : null,
   };
 }
 
@@ -58,7 +63,9 @@ export function useYahooPrices(selected, { active }) {
       setLoading(true);
       setError(null);
 
-      const results = await Promise.allSettled(selected.map((id) => fetchOneQuote(id, force)));
+      const results = await Promise.allSettled(
+        selected.map((id) => fetchOneQuote(id, force)),
+      );
       const next = {};
       let anyFailed = false;
       results.forEach((r, i) => {
@@ -74,7 +81,10 @@ export function useYahooPrices(selected, { active }) {
         setError(t("errorPricesYahoo"));
         const mock = {};
         selected.forEach((id) => {
-          mock[id] = { eur: Math.random() * 400 + 50, eur_24h_change: Math.random() * 4 - 2 };
+          mock[id] = {
+            eur: Math.random() * 400 + 50,
+            eur_24h_change: Math.random() * 4 - 2,
+          };
         });
         setPrices(mock);
         setLastUpdated(new Date());
@@ -82,7 +92,7 @@ export function useYahooPrices(selected, { active }) {
       setLoading(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selected]
+    [selected],
   );
 
   useEffect(() => {

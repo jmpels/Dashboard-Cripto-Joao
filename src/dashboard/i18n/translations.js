@@ -123,6 +123,12 @@ export const translations = {
     barView: "Vista do gráfico",
     viewByAsset: "Por ativo",
     viewByPurchase: "Por compra",
+    loadingHistory: "A carregar histórico...",
+    historyError: "Não foi possível obter o histórico deste ativo.",
+    tabOverview: "Resumo",
+    tabHistory: "Histórico",
+    showAllCount: "Mostrar todos ({count})",
+    showLess: "Mostrar menos",
   },
   en: {
     // Header
@@ -242,5 +248,11 @@ export const translations = {
     barView: "Chart view",
     viewByAsset: "By asset",
     viewByPurchase: "By purchase",
+    loadingHistory: "Loading history...",
+    historyError: "Couldn't load this asset's history.",
+    tabOverview: "Overview",
+    tabHistory: "History",
+    showAllCount: "Show all ({count})",
+    showLess: "Show less",
   },
 };

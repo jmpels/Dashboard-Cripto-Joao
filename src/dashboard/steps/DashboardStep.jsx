@@ -7,7 +7,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import { useEffect, useState } from "react";
 import { AddVariantModal } from "../components/AddVariantModal";
 import { addPosition, removePosition } from "../utils/positions";
-
+import { AssetHistoryChart } from "../components/AssetHistoryChart";
 
 export function DashboardStep({
   loading,
@@ -29,6 +29,14 @@ export function DashboardStep({
   barDataByPosition,
 }) {
   const { t } = useLanguage();
+
+  const [view, setView] = useState("overview"); // "overview" | "history"
+  const [showAll, setShowAll] = useState(false);
+  const HISTORY_LIMIT = 6;
+
+  const byValue = [...pieData].sort((a, b) => b.value - a.value);
+  const visibleHistory = showAll ? byValue : byValue.slice(0, HISTORY_LIMIT);
+
   // Só mostra o ecrã de loading inteiro na primeira vez; as atualizações
   // automáticas seguintes só mudam o texto do botão de refresh no cabeçalho.
   if (loading && portfolioData.length === 0) {
@@ -92,24 +100,74 @@ export function DashboardStep({
         coinCount={pieData.length}
       />
 
-      <div className="charts-grid">
-        <PortfolioPieChart portfolioData={pieData} />
-        <PortfolioBarChart
-          barData={barData}
-          barDataByPosition={barDataByPosition}
-          canSplit={hasVariants}
-        />
+      <div className="view-toggle dashboard-tabs" role="tablist">
+        <button
+          role="tab"
+          aria-selected={view === "overview"}
+          className={view === "overview" ? "active" : ""}
+          onClick={() => setView("overview")}
+        >
+          {t("tabOverview")}
+        </button>
+        <button
+          role="tab"
+          aria-selected={view === "history"}
+          className={view === "history" ? "active" : ""}
+          onClick={() => setView("history")}
+        >
+          {t("tabHistory")}
+        </button>
       </div>
 
-      <HoldingsTable
-        portfolioData={portfolioData}
-        pendingAssets={pendingAssets}
-        refreshingByType={refreshingByType}
-        holdings={holdings}
-        onQtyChange={updateQty}
-        onAddVariant={openVariantModal}
-        onRemoveVariant={removeVariant}
-      />
+      {view === "overview" && (
+        <>
+          <div className="charts-grid">
+            <PortfolioPieChart portfolioData={pieData} />
+            <PortfolioBarChart
+              barData={barData}
+              barDataByPosition={barDataByPosition}
+              canSplit={hasVariants}
+            />
+          </div>
+
+          <HoldingsTable
+            portfolioData={portfolioData}
+            pendingAssets={pendingAssets}
+            refreshingByType={refreshingByType}
+            holdings={holdings}
+            onQtyChange={updateQty}
+            onAddVariant={openVariantModal}
+            onRemoveVariant={removeVariant}
+          />
+        </>
+      )}
+
+      {view === "history" && (
+        <>
+          <div className="history-grid">
+            {visibleHistory.map((asset) => (
+              <AssetHistoryChart
+                key={asset.id}
+                asset={asset}
+                positions={portfolioData.filter((p) => p.assetId === asset.id)}
+              />
+            ))}
+          </div>
+
+          {byValue.length > HISTORY_LIMIT && (
+            <button
+              className="btn-ghost"
+              style={{ marginBottom: 20 }}
+              onClick={() => setShowAll((s) => !s)}
+            >
+              {showAll
+                ? t("showLess")
+                : t("showAllCount", { count: byValue.length })}
+            </button>
+          )}
+        </>
+      )}
+
       {variantFor && (
         <AddVariantModal
           symbol={
