@@ -1213,3 +1213,36 @@
     opacity: 0.85;
   }
 }
+
+
+.button-up {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  color: var(--accent);
+  font-size: 18px;
+  cursor: pointer;
+
+  /* hidden by default */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+}
+
+/* shown only after scrolling past the threshold */
+.button-up.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+}
+
+.button-up:hover { border-color: var(--accent); }

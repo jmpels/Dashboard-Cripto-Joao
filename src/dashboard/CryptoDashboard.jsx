@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState,useEffect } from "react";
 import { Header } from "./components/Header";
 import { SelectCoinsStep } from "./steps/SelectCoinsStep";
 import { AmountsStep } from "./steps/AmountsStep";
@@ -18,7 +18,9 @@ import {
   sortPositionKeys,
   removeAssetPositions,
 } from "./utils/positions";
+import { ScrollTopButton } from "./components/ScrollTopButton";
 import "./dashboard.css";
+
 
 // ETFs e ações vêm ambos da Yahoo Finance e partilham o mesmo hook de preços —
 // só a moeda (CoinGecko) tem uma fonte de dados própria.
@@ -28,6 +30,19 @@ const hasSavedHoldings = (holdings) =>
   Object.values(holdings).some((h) => parseFloat(h?.qty) > 0);
 
 export default function CryptoDashboard() {
+  //Up Button Scroll
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  
+
+  //
+
   const [selected, setSelected] = useLocalStorageState(
     "cryptfolio:selected",
     [],
@@ -195,6 +210,7 @@ export default function CryptoDashboard() {
           )}
         </div>
       </div>
+      <ScrollTopButton></ScrollTopButton>
     </div>
   );
 }
