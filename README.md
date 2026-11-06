@@ -1,6 +1,6 @@
 # Cryptfolio
 
-VERCEL HOSTINGS : [dashboard-cripto-chi.vercel.app](https://dashboard-cripto-chi.vercel.app/);
+VERCEL HOSTING : [dashboard-cripto-chi.vercel.app](https://dashboard-cripto-chi.vercel.app/);
 
 Dashboard de portefólio de criptomoedas, pensado para uso no telemóvel. Preços em tempo real (EUR) via CoinGecko, gráficos de distribuição e evolução, tema claro/escuro, e instalável como app (PWA).
 
